@@ -188,6 +188,7 @@ class AlumniClassNote(db.Model):
         nullable=False,
         unique=True,
     )
+    nameplate = db.Column(db.String(255), default="", nullable=True)
     class_note_text = db.Column(db.Text)
     image_filename = db.Column(db.String(255))
     published = db.Column(db.Boolean, default=False)
@@ -260,6 +261,7 @@ class AlumniClassNote(db.Model):
         update.volunteer_choices = form.volunteer_choices.data or []
         update.other_volunteer = form.other_volunteer.data or ""
 
+        self.nameplate = form.nameplate.data or ""
         self.class_note_text = form.class_note_text.data or ""
         self.image_filename = form.existing_image.data or self.image_filename or ""
 
@@ -296,6 +298,7 @@ class AlumniClassNote(db.Model):
             "additional_updates": update.additional_updates if update else "",
             "volunteer_choices": update.volunteer_choices or [],
             "other_volunteer": update.other_volunteer if update else "",
+            "nameplate": self.nameplate or "",
             "class_note_text": self.class_note_text or "",
             "image_filename": self.image_filename or "",
             "existing_image": self.image_filename or "",

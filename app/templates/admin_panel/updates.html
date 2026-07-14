@@ -1,0 +1,204 @@
+{% extends "admin_panel/base.html" %}
+{% block title %}Alumni Update Entries · Dashboard{% endblock %}
+
+{% block content %}
+<section>
+  <h2 class="section-title">Alumni Update Entries</h2>
+
+  <div class="table-wrap">
+    <table class="data-table" aria-label="Alumni Updates Table">
+      <thead>
+        <tr>
+          <th style="width: 220px; text-align: left;">Name of Alumni</th>
+          <th style="width: 220px; text-align: left;">Grad Year</th>
+          <th style="width: 220px; text-align: left;">Date of Submission</th>
+          <th style="width: 160px; text-align: left;">Actions</th>
+          <th style="width: 160px; text-align: left;">Added to RE</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr data-id="{{ entry.id }}">
+          <td style="text-align: left;" class="cell-name">{{ entry.alumni_update.alumnus.first_name }} {{ entry.alumni_update.alumnus.last_name }}</td>
+          <td style="text-align: left;" class="cell-grad-year">{{ entry.alumni_update.alumnus.geneva_educations[0].graduation_year if entry.alumni_update.alumnus.geneva_educations else '' }}</td>
+          <td style="text-align: left;" class="cell-submitted-at">{{ entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and entry.alumni_update.submitted_at else '' }}</td>
+          <td style="text-align: left;" class="cell-actions">
+            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_modal_payload() | tojson }}'>Edit Updates</a>
+          </td>
+          <td style="text-align: left;" class="cell-published">
+            {% if entry.published == True %}
+            ✅
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="" id="editForm" enctype="multipart/form-data">
+        {{ form.csrf_token }}
+
+        <div class="modal-header">
+          <h5 class="modal-title" id="editModalLabel">Edit Alumni Update</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" name="note_id" id="note_id" />
+
+          <div class="mb-3">
+            <strong>{{ form.first_name.label }}</strong>
+            {{ form.first_name(id="first_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.last_name.label }}</strong>
+            {{ form.last_name(id="last_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.maiden_name.label }}</strong>
+            {{ form.maiden_name(id="maiden_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.email.label }}</strong>
+            {{ form.email(id="email", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.phone.label }}</strong>
+            {{ form.phone(id="phone", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.address_line1.label }}</strong>
+            {{ form.address_line1(id="address_line1", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.address_line2.label }}</strong>
+            {{ form.address_line2(id="address_line2", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.city.label }}</strong>
+            {{ form.city(id="city", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.state.label }}</strong>
+            {{ form.state(id="state", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.postal_code.label }}</strong>
+            {{ form.postal_code(id="postal_code", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.country.label }}</strong>
+            {{ form.country(id="country", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.marital_status.label }}</strong>
+            {{ form.marital_status(id="marital_status", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.spouse_name.label }}</strong>
+            {{ form.spouse_name(id="spouse_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.marry_date.label }}</strong>
+            {{ form.marry_date(id="marry_date", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.child_first_name.label }}</strong>
+            {{ form.child_first_name(id="child_first_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.child_last_name.label }}</strong>
+            {{ form.child_last_name(id="child_last_name", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.child_gender.label }}</strong>
+            {{ form.child_gender(id="child_gender", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.child_birthday.label }}</strong>
+            {{ form.child_birthday(id="child_birthday", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.employer.label }}</strong>
+            {{ form.employer(id="employer", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.position.label }}</strong>
+            {{ form.position(id="position", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.institution.label }}</strong>
+            {{ form.institution(id="institution", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.additional_updates.label }}</strong>
+            {{ form.additional_updates(id="additional_updates", class="form-control") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.volunteer_choices.label }}</strong>
+            {{ form.volunteer_choices(id="volunteer_choices") }}
+          </div>
+          <div class="mb-3">
+            <strong>{{ form.other_volunteer.label }}</strong>
+            {{ form.other_volunteer(id="other_volunteer", class="form-control") }}
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.edit-link').forEach(link => {
+      link.addEventListener('click', function (event) {
+        event.preventDefault();
+        const payload = JSON.parse(this.dataset.payload || '{}');
+        const mapping = {
+          first_name: 'first_name',
+          last_name: 'last_name',
+          maiden_name: 'maiden_name',
+          email: 'email',
+          phone: 'phone',
+          address_line1: 'address_line1',
+          address_line2: 'address_line2',
+          city: 'city',
+          state: 'state',
+          postal_code: 'postal_code',
+          country: 'country',
+          marital_status: 'marital_status',
+          spouse_name: 'spouse_name',
+          marry_date: 'marry_date',
+          employer: 'employer',
+          position: 'position',
+          institution: 'institution',
+          additional_updates: 'additional_updates',
+          other_volunteer: 'other_volunteer',
+          id: 'note_id'
+        };
+
+        Object.entries(mapping).forEach(([sourceKey, elementId]) => {
+          const el = document.getElementById(elementId);
+          if (!el) return;
+          let val = payload[sourceKey] ?? '';
+          if (val === null || val === undefined) val = '';
+          el.value = val;
+        });
+
+        document.getElementById('editForm').action = `/dashboard/class-notes/${this.dataset.id}/edit`;
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+      });
+    });
+  });
+</script>
+{% endblock %}

@@ -60,6 +60,7 @@ class EditFullEntryForm(FlaskForm):
     other_volunteer = TextAreaField('Other Volunteer Ideas', validators=[Optional()])
 
     # Class note
+    nameplate = StringField('Nameplate', validators=[Optional()])
     class_note_text = TextAreaField('Class Note', validators=[Optional(), Length(max=300)])
     image = FileField('Image', validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Images only!')])
     existing_image = HiddenField()

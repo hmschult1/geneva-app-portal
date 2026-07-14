@@ -43,6 +43,19 @@ def dashboard_AlumniClassNotes():
     form = EditFullEntryForm()
     return render_template('admin_panel/class-notes.html', entries=entries, form=form)
 
+
+@dashboard_bp.route('/updates')
+@login_required
+def dashboard_updates():
+    entries = (
+        AlumniClassNote.query.join(AlumniUpdate)
+        .order_by(AlumniUpdate.submitted_at.desc())
+        .all()
+    )
+    form = EditFullEntryForm()
+    return render_template('admin_panel/updates.html', entries=entries, form=form)
+
+
 @dashboard_bp.route('/class-notes/<int:note_id>/edit', methods=['POST'])
 @login_required
 def edit_class_note(note_id):
