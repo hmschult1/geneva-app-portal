@@ -8,7 +8,6 @@ from app import db
 # separately by the auth user model and is not created from or attached to
 # each alumni submission.
 
-
 class PhoneType(enum.Enum):
     MOBILE = "mobile"
     HOME = "home"
@@ -87,7 +86,62 @@ class AlumniUpdate(db.Model):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    
+    def apply_alumni_update_edit(self, form):
+        alumnus = self.alumnus
 
+        if not alumnus:
+            return self
+
+        self.viewed = True
+
+        alumnus.first_name = form.first_name.data or ""
+        alumnus.last_name = form.last_name.data or ""
+        alumnus.maiden_name = form.maiden_name.data or ""
+
+        if alumnus.geneva_educations:
+            education = alumnus.geneva_educations[0]
+            education.degree_level = form.grad_degree_type.data or ""
+            education.graduation_year = form.grad_year.data or ""
+        else:
+            alumnus.geneva_educations.append(
+                AlumniGenevaEducation(
+                    degree_level=form.grad_degree_type.data or "",
+                    graduation_year=form.grad_year.data or "",
+                )
+            )
+
+        self.update_types = form.update_types.data or []
+        self.additional_updates = form.additional_updates.data or ""
+        self.volunteer_choices = form.volunteer_choices.data or []
+        self.other_volunteer = form.other_volunteer.data or ""
+
+        return self
+
+
+    def to_edit_alumni_update_modal_payload(self):
+        alumnus = self.alumnus
+
+        return {
+            "id": self.id,
+            "first_name": alumnus.first_name if alumnus else "",
+            "last_name": alumnus.last_name if alumnus else "",
+            "maiden_name": alumnus.maiden_name if alumnus else "",
+            "grad_year": (
+            alumnus.geneva_educations[0].graduation_year
+            if alumnus and alumnus.geneva_educations
+            else ""
+            ),
+            "grad_degree_type": (
+                alumnus.geneva_educations[0].degree_level
+                if alumnus and alumnus.geneva_educations
+                else ""
+            ),
+            "update_types": self.update_types or [],
+            "additional_updates": self.additional_updates or "",
+            "volunteer_choices": self.volunteer_choices or [],
+            "other_volunteer": self.other_volunteer or "",
+        }
 
 class AlumniAddress(db.Model):
     __tablename__ = "alumni_addresses"
@@ -195,7 +249,7 @@ class AlumniClassNote(db.Model):
 
     alumni_update = db.relationship("AlumniUpdate", back_populates="class_note")
 
-    def apply_edit_form(self, form):
+    def apply_class_note_edit(self, form):
         update = self.alumni_update
         alumnus = update.alumnus if update else None
 
@@ -207,9 +261,6 @@ class AlumniClassNote(db.Model):
         alumnus.first_name = form.first_name.data or ""
         alumnus.last_name = form.last_name.data or ""
         alumnus.maiden_name = form.maiden_name.data or ""
-        alumnus.email = form.email.data or ""
-        alumnus.phone = form.phone.data or ""
-        alumnus.phone_type = form.phone_type.data or None
 
         if alumnus.geneva_educations:
             education = alumnus.geneva_educations[0]
@@ -224,121 +275,28 @@ class AlumniClassNote(db.Model):
                 )
             )
 
-        address = alumnus.addresses[0] if alumnus.addresses else None
-        if address is None:
-            address = AlumniAddress(alumnus_id=alumnus.id)
-            alumnus.addresses.append(address)
-
-        address.address_line1 = form.address_line1.data or ""
-        address.address_line2 = form.address_line2.data or ""
-        address.city = form.city.data or ""
-        address.state = form.state.data or ""
-        address.postal_code = form.postal_code.data or ""
-        address.country = form.country.data or ""
-
-        family_update = update.family_update
-        if family_update is None:
-            family_update = AlumniFamilyUpdate(alumni_update_id=update.id)
-            update.family_update = family_update
-
-        family_update.marital_status = form.marital_status.data or ""
-        family_update.spouse_name = form.spouse_name.data or ""
-        family_update.spouse_undergrad_year = form.spouse_grad_year.data or "" if form.spouse_degree_type.data == "Undegraduate" else family_update.spouse_undergrad_year
-        family_update.spouse_graduate_year = form.spouse_grad_year.data or "" if form.spouse_degree_type.data == "Graduate" else family_update.spouse_graduate_year
-        family_update.spouse_online_year = form.spouse_grad_year.data or "" if form.spouse_degree_type.data == "Online Degree" else family_update.spouse_online_year
-        family_update.marry_date = form.marry_date.data
-
-        employment_update = update.employment_updates[0] if update.employment_updates else None
-        if employment_update is None:
-            employment_update = AlumniEmploymentUpdate(alumni_update_id=update.id)
-            update.employment_updates.append(employment_update)
-
-        employment_update.employer = form.employer.data or ""
-        employment_update.position = form.position.data or ""
-
-        education_update = update.education_updates[0] if update.education_updates else None
-        if education_update is None:
-            education_update = AlumniEducationUpdate(alumni_update_id=update.id)
-            update.education_updates.append(education_update)
-
-        education_update.institution = form.institution.data or ""
-        education_update.graduation_year = form.education_grad_year.data or ""
-
-        child = update.children[0] if update.children else None
-        if child is None:
-            child = AlumniChild(alumni_update_id=update.id)
-            update.children.append(child)
-
-        child.first_name = form.child_first_name.data or ""
-        child.last_name = form.child_last_name.data or ""
-        child.gender = form.child_gender.data or ""
-        child.birthday = form.child_birthday.data
-
-        update.additional_updates = form.additional_updates.data or ""
-        update.volunteer_choices = form.volunteer_choices.data or []
-        update.other_volunteer = form.other_volunteer.data or ""
-
         self.nameplate = form.nameplate.data or ""
         self.class_note_text = form.class_note_text.data or ""
         self.image_filename = form.existing_image.data or self.image_filename or ""
 
         return self
 
-    def to_edit_modal_payload(self):
+    def to_edit_class_note_modal_payload(self):
         update = self.alumni_update
         alumnus = update.alumnus if update else None
-        address = alumnus.addresses[0] if alumnus and alumnus.addresses else None
-        family_update = update.family_update if update else None
-        employment_update = update.employment_updates[0] if update and update.employment_updates else None
-        education_update = update.education_updates[0] if update and update.education_updates else None
-        child = update.children[0] if update and update.children else None
 
         return {
             "id": self.id,
             "first_name": alumnus.first_name if alumnus else "",
             "last_name": alumnus.last_name if alumnus else "",
-            "maiden_name": alumnus.maiden_name if alumnus else "",
-            "email": alumnus.email if alumnus else "",
-            "phone": alumnus.phone if alumnus else "",
-            "phone_type": alumnus.phone_type.value if alumnus and alumnus.phone_type else "",
             "grad_year": (
                 alumnus.geneva_educations[0].graduation_year if alumnus and alumnus.geneva_educations else ""
             ),
             "grad_degree_type": (
                 alumnus.geneva_educations[0].degree_level if alumnus and alumnus.geneva_educations else ""
             ),
-            "address_line1": address.address_line1 if address else "",
-            "address_line2": address.address_line2 if address else "",
-            "city": address.city if address else "",
-            "state": address.state if address else "",
-            "postal_code": address.postal_code if address else "",
-            "country": address.country if address else "",
-            "marital_status": family_update.marital_status if family_update else "",
-            "spouse_name": family_update.spouse_name if family_update else "",
-            "spouse_grad_year": family_update.spouse_graduate_year if family_update else "",
-            "spouse_degree_type": (
-                "Undegraduate"
-                if family_update and family_update.spouse_undergrad_year
-                else "Graduate"
-                if family_update and family_update.spouse_graduate_year
-                else "Online Degree"
-                if family_update and family_update.spouse_online_year
-                else ""
-            ),
-            "marry_date": family_update.marry_date.strftime("%Y-%m-%d") if family_update and family_update.marry_date else "",
-            "employer": employment_update.employer if employment_update else "",
-            "position": employment_update.position if employment_update else "",
-            "institution": education_update.institution if education_update else "",
-            "education_grad_year": education_update.graduation_year if education_update else "",
-            "additional_updates": update.additional_updates if update else "",
-            "volunteer_choices": update.volunteer_choices or [],
-            "other_volunteer": update.other_volunteer if update else "",
             "nameplate": self.nameplate or "",
             "class_note_text": self.class_note_text or "",
             "image_filename": self.image_filename or "",
             "existing_image": self.image_filename or "",
-            "child_first_name": child.first_name if child else "",
-            "child_last_name": child.last_name if child else "",
-            "child_gender": child.gender if child else "",
-            "child_birthday": child.birthday.strftime("%Y-%m-%d") if child and child.birthday else "",
         }

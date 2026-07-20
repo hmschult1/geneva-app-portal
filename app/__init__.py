@@ -43,6 +43,7 @@ def create_app(config_class=Config):
 
     # Import models so Flask-Migrate can discover them
     from app import auth_models
+    from app import models
 
     # Register blueprints
     from app.auth_routes import auth_bp

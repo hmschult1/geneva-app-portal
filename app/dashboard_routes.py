@@ -6,6 +6,7 @@ from app.auth_forms import ChangePasswordForm
 from app.dashboard_forms import EditFullEntryForm
 from app.models import AlumniClassNote, AlumniUpdate
 from app import db
+from sqlalchemy.orm import selectinload
 
 dashboard_bp = Blueprint('dashboard', __name__, url_prefix='/dashboard')
 
@@ -48,7 +49,15 @@ def dashboard_AlumniClassNotes():
 @login_required
 def dashboard_updates():
     entries = (
-        AlumniClassNote.query.join(AlumniUpdate)
+        AlumniUpdate.query
+        .options(
+            selectinload(AlumniUpdate.alumnus),
+            selectinload(AlumniUpdate.family_update),
+            selectinload(AlumniUpdate.children),
+            selectinload(AlumniUpdate.employment_updates),
+            selectinload(AlumniUpdate.education_updates),
+            selectinload(AlumniUpdate.class_note),
+        )
         .order_by(AlumniUpdate.submitted_at.desc())
         .all()
     )

@@ -1,5 +1,5 @@
 {% extends "admin_panel/base.html" %}
-{% block title %}Alumni Update Entries · Dashboard{% endblock %}
+{% block title %}Alumni Update Entries · Geneva App Portal{% endblock %}
 
 {% block content %}
 <section>
@@ -9,25 +9,25 @@
     <table class="data-table" aria-label="Alumni Updates Table">
       <thead>
         <tr>
-          <th style="width: 220px; text-align: left;">Name of Alumni</th>
-          <th style="width: 220px; text-align: left;">Grad Year</th>
+          <th style="width: 80px; text-align: left;">Actions</th>
           <th style="width: 220px; text-align: left;">Date of Submission</th>
-          <th style="width: 160px; text-align: left;">Actions</th>
-          <th style="width: 160px; text-align: left;">Added to RE</th>
+          <th style="width: 200px; text-align: left;">Name of Alumni</th>
+          <th style="width: 200px; text-align: left;">Grad Year</th>
+          <th style="width: 160px; text-align: left;">Entered to RE</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
         <tr data-id="{{ entry.id }}">
-          <td style="text-align: left;" class="cell-name">{{ entry.alumni_update.alumnus.first_name }} {{ entry.alumni_update.alumnus.last_name }}</td>
-          <td style="text-align: left;" class="cell-grad-year">{{ entry.alumni_update.alumnus.geneva_educations[0].graduation_year if entry.alumni_update.alumnus.geneva_educations else '' }}</td>
-          <td style="text-align: left;" class="cell-submitted-at">{{ entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and entry.alumni_update.submitted_at else '' }}</td>
           <td style="text-align: left;" class="cell-actions">
-            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_modal_payload() | tojson }}'>Edit Updates</a>
+            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_alumni_update_modal_payload() | tojson }}'><img src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
           </td>
+          <td style="text-align: left;" class="cell-submitted-at">{{ entry.submitted_at.strftime('%Y-%m-%d') if entry and entry.submitted_at else '' }}</td>
+          <td style="text-align: left;" class="cell-name">{{ entry.alumnus.first_name }} {{ entry.alumnus.last_name }}</td>
+          <td style="text-align: left;" class="cell-grad-year">{{ entry.alumnus.geneva_educations[0].graduation_year if entry.alumnus.geneva_educations else '' }}</td>
           <td style="text-align: left;" class="cell-published">
-            {% if entry.published == True %}
-            ✅
+            {% if entry.enteredInRE == True %}
+            <img src="{{ url_for('static', filename='_assets/check-icon.png') }}" alt="Entered In RE">
             {% endif %}
           </td>
         </tr>

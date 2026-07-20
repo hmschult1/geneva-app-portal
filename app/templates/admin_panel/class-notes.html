@@ -1,5 +1,5 @@
 {% extends "admin_panel/base.html" %}
-{% block title %}Class Note Entries · Dashboard{% endblock %}
+{% block title %}Class Note Entries · Geneva App Portal{% endblock %}
 
 {% block content %}
 <section>
@@ -9,27 +9,28 @@
     <table class="data-table" aria-label="Class Notes Entries Table">
       <thead>
         <tr>
-          <th style="width: 220px; text-align: left;">Name of Alumni</th>
-          <th style="width: 220px; text-align: left;">Grad Year</th>
-          <th style="width: 220px; text-align: left;">Date of Submission</th>
+          <th style="width: 80px; text-align: left;">Edit</th>
+          <th style="width: 200px; text-align: left;">Date of Submission</th>
+          <th style="width: 200px; text-align: left;">Name of Alumni</th>
+          <th style="width: 100px; text-align: left;">Grad Year</th>
           <th style="width: 260px; text-align: left;">Preview Class Note</th>
-          <th style="width: 160px; text-align: left;">Actions</th>
-          <th style="width: 160px; text-align: left;">Published to CMS</th>
+          <th style="width: 200px; text-align: left;">Active on CMS</th>
         </tr>
       </thead>
       <tbody>
         {% for entry in entries %}
         <tr data-id="{{ entry.id }}">
+          <td style="text-align: left;" class="cell-actions">
+            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_class_note_modal_payload() | tojson }}'><img src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
+          </td>
+          <td style="text-align: left;" class="cell-submitted-at">{{ entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and entry.alumni_update.submitted_at else '' }}</td>
           <td style="text-align: left;" class="cell-name">{{ entry.alumni_update.alumnus.first_name }} {{ entry.alumni_update.alumnus.last_name }}</td>
           <td style="text-align: left;" class="cell-grad-year">{{ entry.alumni_update.alumnus.geneva_educations[0].graduation_year if entry.alumni_update.alumnus.geneva_educations else '' }}</td>
-          <td style="text-align: left;" class="cell-submitted-at">{{ entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and entry.alumni_update.submitted_at else '' }}</td>
           <td style="text-align: left;" class="cell-note">{{ entry.class_note_text[:80] }}</td>
-          <td style="text-align: left;" class="cell-actions">
-            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_modal_payload() | tojson }}'>Edit Class Note</a>
-          </td>
+
           <td class="cell-published">
             {% if entry.published == True %}
-            ✅
+            <img src="{{ url_for('static', filename='_assets/check-icon.png') }}" alt="Active on CMS">
             {% endif %}
           </td>
         </tr>
@@ -62,16 +63,16 @@
             {{ form.last_name(id="last_name", class="form-control") }}
           </div>
           <div class="mb-3">
-            <strong>{{ form.nameplate.label }}</strong>
-            {{ form.nameplate(id="nameplate", class="form-control", placeholder="Add nameplate") }}
+            <strong>{{ form.grad_degree_type.label }}</strong>
+            {{ form.grad_degree_type(id="grad_degree_type", class="form-select") }}
           </div>
           <div class="mb-3">
             <strong>{{ form.grad_year.label }}</strong>
             {{ form.grad_year(id="grad_year", class="form-control") }}
           </div>
           <div class="mb-3">
-            <strong>{{ form.grad_degree_type.label }}</strong>
-            {{ form.grad_degree_type(id="grad_degree_type", class="form-select") }}
+            <strong>{{ form.nameplate.label }}</strong>
+            {{ form.nameplate(id="nameplate", class="form-control", placeholder="Add nameplate") }}
           </div>
           <div class="mb-3">
             <strong>{{ form.class_note_text.label }}</strong>
@@ -88,7 +89,7 @@
         </div>
 
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">Save</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
         </div>
       </form>
