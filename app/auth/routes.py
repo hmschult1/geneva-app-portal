@@ -65,6 +65,7 @@ def login():
             )
 
         login_user(user, remember=False)
+        session.permanent = True
 
         user.last_login_at = datetime.now(timezone.utc)
         db.session.commit()
