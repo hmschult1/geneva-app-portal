@@ -91,3 +91,11 @@ def logout():
     session.clear()
     flash('You have been logged out. Thank you for using the Geneva App Portal!', 'info')
     return redirect(url_for('auth.login'))
+
+@auth_bp.route("/session-timeout")
+def session_timeout():
+    flash(
+        "Your session expired due to inactivity. Please sign in again.",
+        "warning",
+    )
+    return redirect(url_for("auth.login"))

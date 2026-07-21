@@ -16,16 +16,132 @@
   const notification = document.getElementById('notification');
   const notificationText = document.getElementById('notification-text');
 
-  // Sidebar toggle (desktop collapsible; mobile slide-in)
-  sidebarToggle?.addEventListener('click', () => {
-    const mobile = window.matchMedia('(max-width: 720px)').matches;
-    if (mobile) {
-      layout.classList.toggle('show-sidebar');
-    } else {
-      layout.classList.toggle('collapsed');
+  document.addEventListener("DOMContentLoaded", function () {
+    const timeoutMinutes = Number(window.sessionTimeoutMinutes || 30);
+    const warningMinutes = Number(window.sessionWarningMinutes || 5);
+    const timeoutUrl = window.sessionTimeoutUrl;
+
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+    const warningDelayMs =
+      (timeoutMinutes - warningMinutes) * 60 * 1000;
+
+    let warningTimer;
+    let logoutTimer;
+    let countdownInterval;
+    let timeoutModal;
+
+    const modalElement = document.getElementById("timeoutModal");
+    const countdownElement =
+      document.getElementById("timeoutCountdown");
+
+    if (modalElement && window.bootstrap) {
+      timeoutModal = new bootstrap.Modal(modalElement, {
+        backdrop: "static",
+        keyboard: false
+      });
     }
-    const expanded = sidebarToggle.getAttribute('aria-expanded') === 'true';
-    sidebarToggle.setAttribute('aria-expanded', String(!expanded));
+
+    function updateCountdown(totalSeconds) {
+      if (!countdownElement) {
+        return;
+      }
+
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      countdownElement.textContent =
+        `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
+
+    function stopCountdown() {
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+    }
+
+    function hideTimeoutWarning() {
+      stopCountdown();
+
+      if (timeoutModal) {
+        timeoutModal.hide();
+      }
+    }
+
+    function showTimeoutWarning() {
+      let secondsRemaining = warningMinutes * 60;
+
+      updateCountdown(secondsRemaining);
+
+      if (timeoutModal) {
+        timeoutModal.show();
+      }
+
+      stopCountdown();
+
+      countdownInterval = setInterval(function () {
+        secondsRemaining -= 1;
+
+        updateCountdown(Math.max(secondsRemaining, 0));
+
+        if (secondsRemaining <= 0) {
+          stopCountdown();
+        }
+      }, 1000);
+    }
+
+    function logoutForInactivity() {
+      stopCountdown();
+
+      if (timeoutUrl) {
+        window.location.href = timeoutUrl;
+      }
+    }
+
+    function resetInactivityTimer() {
+      clearTimeout(warningTimer);
+      clearTimeout(logoutTimer);
+
+      hideTimeoutWarning();
+
+      warningTimer = setTimeout(
+        showTimeoutWarning,
+        warningDelayMs
+      );
+
+      logoutTimer = setTimeout(
+        logoutForInactivity,
+        timeoutMs
+      );
+    }
+
+    const activityEvents = [
+      "mousedown",
+      "keydown",
+      "touchstart",
+      "scroll",
+      "click"
+    ];
+
+    activityEvents.forEach(function (eventName) {
+      document.addEventListener(
+        eventName,
+        resetInactivityTimer,
+        true
+      );
+    });
+
+    const continueButton =
+      document.getElementById("continueSessionButton");
+
+    if (continueButton) {
+      continueButton.addEventListener(
+        "click",
+        resetInactivityTimer
+      );
+    }
+
+    resetInactivityTimer();
   });
 
   // Modal open helpers

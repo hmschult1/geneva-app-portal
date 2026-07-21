@@ -44,7 +44,7 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     
     # INACTIVITY TIMER
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=.5)
+    PERMANENT_SESSION_LIFETIME = timedelta(minutes=30)
     SESSION_REFRESH_EACH_REQUEST = True
 
     # Set this to True in production when the app uses HTTPS.
