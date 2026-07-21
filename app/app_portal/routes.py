@@ -121,7 +121,7 @@ def edit_class_note(note_id):
         flash("Entry updated successfully.", "success")
     else:
         flash(
-            "There was an error submitting the form. "
+            "There was an error submitting your edits. "
             "Please check the fields.",
             "danger"
         )

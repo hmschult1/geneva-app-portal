@@ -1,3 +1,4 @@
+from datetime import timedelta
 import os
 from urllib.parse import quote_plus
 from dotenv import load_dotenv
@@ -41,6 +42,10 @@ class Config:
     # Session security
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
+    
+    #I NACTIVITY TIMER
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=.5)
+    SESSION_REFRESH_EACH_REQUEST = True
 
     # Set this to True in production when the app uses HTTPS.
     SESSION_COOKIE_SECURE = False

@@ -19,9 +19,7 @@ def create_app(config_class=Config):
 
     # Flask-Login configuration
     login_manager.login_view = "auth.login"
-    login_manager.login_message = (
-        "Please log in to access the Geneva App Portal."
-    )
+    login_manager.login_message = None
     login_manager.login_message_category = "info"
     login_manager.session_protection = "strong"
 
