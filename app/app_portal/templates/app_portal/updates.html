@@ -20,7 +20,7 @@
         {% for entry in entries %}
         <tr data-id="{{ entry.id }}">
           <td style="text-align: left;" class="cell-actions">
-            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_alumni_update_modal_payload() | tojson }}'><img src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
+            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-edit-url="{{ url_for('app_portal.edit_alumni_updates', edit_id=entry.id) }}" data-payload='{{ entry.to_edit_alumni_update_modal_payload() | tojson }}'><img src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
           </td>
           <td style="text-align: left;" class="cell-submitted-at">{{ entry.submitted_at.strftime('%Y-%m-%d') if entry and entry.submitted_at else '' }}</td>
           <td style="text-align: left;" class="cell-name">{{ entry.alumnus.first_name }} {{ entry.alumnus.last_name }}</td>
@@ -41,7 +41,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form method="POST" action="" id="editForm" enctype="multipart/form-data">
-        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
 
         <div class="modal-header">
           <h5 class="modal-title" id="editModalLabel">Edit Alumni Update</h5>
@@ -49,7 +49,7 @@
         </div>
 
         <div class="modal-body">
-          <input type="hidden" name="note_id" id="note_id" />
+          <input type="hidden" name="edit_id" id="edit_id" />
 
           <div class="mb-3">
             <strong>{{ form.first_name.label }}</strong>
@@ -196,6 +196,17 @@
       link.addEventListener('click', function (event) {
         event.preventDefault();
         const payload = JSON.parse(this.dataset.payload || '{}');
+        const editUrl = this.dataset.editUrl;
+
+        if (!editUrl) {
+          console.error('No edit URL was provided for this entry.');
+          return;
+        }
+
+        // Send the form to:
+        // /alumni_update/<edit_id>/edit
+        editForm.action = editUrl;
+
         const mapping = {
           first_name: 'first_name',
           last_name: 'last_name',

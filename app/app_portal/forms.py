@@ -21,8 +21,23 @@ def get_degree_type_choices():
     except Exception:
         return []
 
+class EditClassNoteEntryForm(FlaskForm):
+    # Contact / personal
+    first_name = StringField('First Name', validators=[DataRequired()])
+    last_name = StringField('Last Name', validators=[DataRequired()])
+    maiden_name = StringField('Maiden Name', validators=[Optional()])
+    grad_year = StringField('Geneva Grad Year', validators=[DataRequired()])
+    grad_degree_type = SelectField('Geneva Degree Type', choices=get_degree_type_choices, validators=[Optional()])
+    
+    # Class note
+    nameplate = StringField('Nameplate', validators=[Optional()])
+    class_note_text = TextAreaField('Class Note', validators=[Optional(), Length(max=300)])
+    image = FileField('Image', validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Images only!')])
+    existing_image = HiddenField()
+    
+    submit = SubmitField('Save')
 
-class EditFullEntryForm(FlaskForm):
+class EditAlumniUpdateEntryForm(FlaskForm):
     # Contact / personal
     first_name = StringField('First Name', validators=[DataRequired()])
     last_name = StringField('Last Name', validators=[DataRequired()])
@@ -32,6 +47,20 @@ class EditFullEntryForm(FlaskForm):
     phone_type = SelectField('Phone Type', choices=[('mobile', 'Mobile'), ('home', 'Home')], validators=[Optional()])
     grad_year = StringField('Geneva Grad Year', validators=[DataRequired()])
     grad_degree_type = SelectField('Geneva Degree Type', choices=get_degree_type_choices, validators=[Optional()])
+    update_types = SelectMultipleField(
+        "What information would you like to share with the College?",
+        choices=[
+            ('Contact Information', "Contact Information"),
+            ('Birth Announcement(s)', "Birth Announcement(s)"),
+            ('Family Update', "Family Update"),
+            ('Employment Update', "Employment Update"),
+            ('Additional Education', "Additional Education"),
+            ('Life Achievements', "Life Achievement(s)"),
+        ],
+        option_widget=CheckboxInput(),
+        widget=ListWidget(prefix_label=True),
+        validators=[Optional()]
+    )
 
     # Address
     address_line1 = StringField('Street Address (Line 1)', validators=[Optional()])
@@ -82,11 +111,5 @@ class EditFullEntryForm(FlaskForm):
         validators=[Optional()]
     )
     other_volunteer = TextAreaField('Other Volunteer Ideas', validators=[Optional()])
-
-    # Class note
-    nameplate = StringField('Nameplate', validators=[Optional()])
-    class_note_text = TextAreaField('Class Note', validators=[Optional(), Length(max=300)])
-    image = FileField('Image', validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'webp'], 'Images only!')])
-    existing_image = HiddenField()
 
     submit = SubmitField('Save')

@@ -21,11 +21,19 @@
         {% for entry in entries %}
         <tr data-id="{{ entry.id }}">
           <td style="text-align: left;" class="cell-actions">
-            <a href="#" class="edit-link" data-id="{{ entry.id }}" data-payload='{{ entry.to_edit_class_note_modal_payload() | tojson }}'><img src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
+            <a href="#" class="edit-link" data-id="{{ entry.id }}"
+              data-edit-url="{{ url_for('app_portal.edit_class_note', edit_id=entry.id) }}"
+              data-payload='{{ entry.to_edit_class_note_modal_payload() | tojson }}'><img
+                src="{{ url_for('static', filename='_assets/edit-icon.png') }}" alt="Edit"></a>
           </td>
-          <td style="text-align: left;" class="cell-submitted-at">{{ entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and entry.alumni_update.submitted_at else '' }}</td>
-          <td style="text-align: left;" class="cell-name">{{ entry.alumni_update.alumnus.first_name }} {{ entry.alumni_update.alumnus.last_name }}</td>
-          <td style="text-align: left;" class="cell-grad-year">{{ entry.alumni_update.alumnus.geneva_educations[0].graduation_year if entry.alumni_update.alumnus.geneva_educations else '' }}</td>
+          <td style="text-align: left;" class="cell-submitted-at">{{
+            entry.alumni_update.submitted_at.strftime('%Y-%m-%d') if entry.alumni_update and
+            entry.alumni_update.submitted_at else '' }}</td>
+          <td style="text-align: left;" class="cell-name">{{ entry.alumni_update.alumnus.first_name }} {{
+            entry.alumni_update.alumnus.last_name }}</td>
+          <td style="text-align: left;" class="cell-grad-year">{{
+            entry.alumni_update.alumnus.geneva_educations[0].graduation_year if
+            entry.alumni_update.alumnus.geneva_educations else '' }}</td>
           <td style="text-align: left;" class="cell-note">{{ entry.class_note_text[:80] }}</td>
 
           <td class="cell-published">
@@ -44,7 +52,7 @@
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <form method="POST" action="" id="editForm" enctype="multipart/form-data">
-        {{ form.csrf_token }}
+        {{ form.hidden_tag() }}
 
         <div class="modal-header">
           <h5 class="modal-title" id="editModalLabel">Edit Class Note</h5>
@@ -52,7 +60,7 @@
         </div>
 
         <div class="modal-body">
-          <input type="hidden" name="note_id" id="note_id" />
+          <input type="hidden" name="edit_id" id="edit_id" />
 
           <div class="mb-3">
             <strong>{{ form.first_name.label }}</strong>
@@ -103,6 +111,16 @@
       link.addEventListener('click', function (event) {
         event.preventDefault();
         const payload = JSON.parse(this.dataset.payload || '{}');
+        const editUrl = this.dataset.editUrl;
+
+        if (!editUrl) {
+          console.error('No edit URL was provided for this entry.');
+          return;
+        }
+
+        // Send the form to:
+        // /class-notes/<note_id>/edit
+        editForm.action = editUrl;
 
         document.getElementById('first_name').value = payload.first_name || '';
         document.getElementById('last_name').value = payload.last_name || '';
@@ -111,8 +129,8 @@
         document.getElementById('grad_degree_type').value = payload.grad_degree_type || '';
         document.getElementById('class_note_text').value = payload.class_note_text || '';
         document.getElementById('existing_image').value = payload.existing_image || '';
-        document.getElementById('note_id').value = payload.id || '';
-        document.getElementById('editForm').action = `/app_portal/class-notes/${payload.id}/edit`;
+        document.getElementById('edit_id').value = payload.id || '';
+        // document.getElementById('editForm').action = `/app_portal/class-notes/${payload.id}/edit`;
 
         const imageFilename = payload.image_filename || '';
         const previewWrapper = document.getElementById('image_preview_wrapper');
