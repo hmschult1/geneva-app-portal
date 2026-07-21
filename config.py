@@ -47,4 +47,4 @@ class Config:
     PERMANENT_SESSION_LIFETIME = timedelta(hours=.5)
 
     # Set this to True in production when the app uses HTTPS.
-    SESSION_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = True
