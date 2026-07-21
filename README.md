@@ -1,123 +1,484 @@
-﻿# Geneva Web Portal
+﻿# Geneva App Portal
 
-A Flask-based admin portal for managing Geneva College alumni submissions, including class notes and alumni update records.
+Geneva App Portal is an internal administrative application developed for Geneva College Marketing. It provides authenticated staff with a secure interface for reviewing, editing, and managing alumni record updates and class note submissions received through the College's public alumni update form.
 
-## Overview
+# Geneva App Portal
 
-This application provides a staff-facing dashboard for reviewing and editing alumni submission data from a MySQL-backed data model. The current workflows include:
+A secure, staff-facing Flask application for reviewing and managing Geneva College alumni submissions.
 
-- browsing alumni updates and class-note entries
-- editing alumni contact and update details from modal forms
-- saving class-note-specific content such as the note text, image, and optional nameplate
-- using a local development login flow for staff access
+The portal connects to separate MySQL databases for alumni records and staff authentication. Authorized staff can sign in, review submitted alumni updates and class notes, edit records, and manage their account password.
 
-## Tech stack
+## Features
 
-- Python 3.11+
-- Flask
-- Flask-SQLAlchemy
-- Flask-Migrate
-- Flask-Login
-- Flask-WTF / WTForms
-- PyMySQL
-- python-dotenv
+* Database-backed staff authentication
+* Secure password hashing and verification
+* Protected staff-only routes with Flask-Login
+* Thirty-minute inactivity timeout
+* Alumni update review and editing
+* Class note review and editing
+* Account password management
+* Separate SQLAlchemy database binds for:
 
-## Project structure
+  * alumni submission data
+  * staff authentication data
+* CSRF-protected forms
+* MySQL SSL connection support
+* Azure App Service deployment through GitHub Actions
+* Model-mapping and staff-user tests
 
-- app/__init__.py - application factory and Flask extension setup
-- app/auth_routes.py - login/logout routes and local staff auth fallback
-- app/dashboard_routes.py - dashboard pages and edit/save routes
-- app/dashboard_forms.py - WTForms definitions for the admin edit modal
-- app/models.py - normalized alumni submission models and edit payload helpers
-- app/templates/admin_panel/ - dashboard HTML templates
-- config.py - environment-based configuration for the MySQL connection
-- run.py - app entry point
+## Technology Stack
 
-## Environment configuration
+* Python
+* Flask
+* Flask-SQLAlchemy
+* Flask-Login
+* Flask-WTF
+* WTForms
+* PyMySQL
+* python-dotenv
+* MySQL
+* GitHub Actions
+* Microsoft Azure App Service
 
-Copy the example environment file and update the values for your local setup:
+## Project Structure
 
-`powershell
-copy .env.example .env
-`
+```text
+geneva-app-portal/
+├── .github/
+│   └── workflows/
+│       └── main_geneva-app-portal.yml
+├── app/
+│   ├── app_portal/
+│   │   ├── templates/
+│   │   │   └── app_portal/
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   └── routes.py
+│   ├── auth/
+│   │   ├── templates/
+│   │   │   └── auth/
+│   │   ├── __init__.py
+│   │   ├── forms.py
+│   │   ├── models.py
+│   │   └── routes.py
+│   ├── static/
+│   ├── templates/
+│   ├── __init__.py
+│   ├── commands.py
+│   ├── extensions.py
+│   └── models.py
+├── tests/
+│   ├── test_model_mapping.py
+│   └── test_staff_user_model.py
+├── .gitignore
+├── config.py
+├── requirements.txt
+├── run.py
+└── README.md
+```
 
-Required variables in .env:
+## Application Architecture
 
-- SECRET_KEY - Flask secret key
-- MYSQL_HOST - MySQL host
-- MYSQL_PORT - MySQL port (default: 3306)
-- MYSQL_DATABASE - MySQL database name
-- MYSQL_USER - MySQL username
-- MYSQL_PASSWORD - MySQL password
-- DUMMY_STAFF_EMAIL - local login email
-- DUMMY_STAFF_PASSWORD - local login password
+The project uses Flask’s application-factory pattern.
 
-## Local development setup
+The application is created by:
 
-### 1. Create and activate a virtual environment
+```python
+from app import create_app
 
-`powershell
+app = create_app()
+```
+
+The `create_app()` function:
+
+1. Creates the Flask application.
+2. Loads configuration from `config.py`.
+3. Initializes SQLAlchemy, CSRF protection, and Flask-Login.
+4. Imports the application models.
+5. Registers the authentication and portal blueprints.
+6. Registers custom Flask CLI commands.
+
+## Database Configuration
+
+The application uses two SQLAlchemy binds.
+
+| Bind     | Purpose                                                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `alumni` | Stores alumni records, submissions, class notes, education updates, employment updates, family updates, and related information |
+| `auth`   | Stores staff user accounts and hashed passwords                                                                                 |
+
+Both databases currently use the same MySQL host and database credentials, but each bind points to a different database name.
+
+## Environment Variables
+
+Create a `.env` file in the project root.
+
+```env
+SECRET_KEY=replace-with-a-long-random-secret
+
+DB_HOST=your-mysql-server.mysql.database.azure.com
+DB_USER=your-database-username
+DB_PASSWORD=your-database-password
+
+ALUMNI_DB_NAME=your-alumni-database
+AUTH_DB_NAME=your-auth-database
+```
+
+### Variable Reference
+
+| Variable         |    Required | Description                                   |
+| ---------------- | ----------: | --------------------------------------------- |
+| `SECRET_KEY`     | Recommended | Used to secure sessions and CSRF tokens       |
+| `DB_HOST`        |         Yes | MySQL server hostname                         |
+| `DB_USER`        |         Yes | MySQL username                                |
+| `DB_PASSWORD`    |         Yes | MySQL password                                |
+| `ALUMNI_DB_NAME` |         Yes | Database containing alumni submission records |
+| `AUTH_DB_NAME`   |         Yes | Database containing staff user accounts       |
+
+The application will not start if any required database variable is missing.
+
+## Local Development Setup
+
+### 1. Clone the repository
+
+```powershell
+git clone https://github.com/hmschult1/geneva-app-portal.git
+cd geneva-app-portal
+```
+
+### 2. Create a virtual environment
+
+```powershell
 py -m venv .venv
+```
+
+Activate it in PowerShell:
+
+```powershell
 .venv\Scripts\Activate.ps1
-`
+```
 
-### 2. Install dependencies
+For Command Prompt:
 
-If the environment does not already have the required packages installed, install them with:
+```cmd
+.venv\Scripts\activate.bat
+```
 
-`powershell
-py -m pip install flask flask-sqlalchemy flask-migrate flask-login flask-wtf pymysql python-dotenv
-`
+For Git Bash:
 
-### 3. Run the app
+```bash
+source .venv/Scripts/activate
+```
 
-`powershell
+### 3. Install dependencies
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+### 4. Configure the environment
+
+Create a `.env` file in the project root and add the required variables:
+
+```env
+SECRET_KEY=development-secret-key
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your-password
+ALUMNI_DB_NAME=alumni_schema
+AUTH_DB_NAME=auth_schema
+```
+
+Do not commit the `.env` file.
+
+### 5. Confirm the databases exist
+
+The databases named by `ALUMNI_DB_NAME` and `AUTH_DB_NAME` must already exist and be accessible to the configured MySQL user.
+
+For example:
+
+```sql
+CREATE DATABASE alumni_schema;
+CREATE DATABASE auth_schema;
+```
+
+The MySQL user must have the required permissions for both databases.
+
+### 6. Run the application
+
+```powershell
 python run.py
-`
+```
 
-The app will start in debug mode and be available at:
+The development server will normally be available at:
 
-- http://127.0.0.1:5000/auth/login
+```text
+http://127.0.0.1:5000
+```
 
-## Authentication
+Unauthenticated users will be redirected to the login page.
 
-The current staff login flow uses a local dummy account defined through environment variables rather than a database-backed staff table. The defaults are:
+## Staff User Management
 
-- email: staff@example.com
-- password: changeme123
+Staff accounts are stored in the authentication database rather than being defined in environment variables.
 
-You can override these in .env with:
+Passwords must be stored as password hashes. They should never be saved as plaintext.
 
-- DUMMY_STAFF_EMAIL
-- DUMMY_STAFF_PASSWORD
+### Create a staff user
 
-## Main routes
+The application registers a custom Flask CLI command named `create-user`.
 
-After login, the dashboard provides access to:
+Run:
 
-- /dashboard/ - landing page
-- /dashboard/class-notes - class-note list and editing view
-- /dashboard/updates - alumni updates list and editing view
-- /dashboard/accounts - account details/password management
-- /auth/logout - logout
+```powershell
+python -m flask --app run.py create-user
+```
 
-## Data model notes
+The command will prompt for:
 
-The application uses a normalized set of SQLAlchemy models for alumni submissions, including:
+* username
+* email address
+* password
+* password confirmation
 
-- Alumni
-- AlumniUpdate
-- AlumniAddress
-- AlumniFamilyUpdate
-- AlumniChild
-- AlumniEmploymentUpdate
-- AlumniEducationUpdate
-- AlumniClassNote
+You may also provide values as command options:
 
-The class-note modal includes a Nameplate field that staff can use to override how the alumni name and graduation year appear online. If left blank, the default display is used.
+```powershell
+python -m flask --app run.py create-user `
+    --username "staff-user" `
+    --email "staff@example.com"
+```
 
-## Notes
+The password prompt remains hidden and requires confirmation.
 
-- This project currently expects a MySQL database connection to be available.
-- The app uses Flask-Migrate style setup for future schema changes.
-- Local development secrets should be kept in .env and not committed to source control.
+### Login
+
+Open the login page and enter the username and password associated with a staff account.
+
+The application:
+
+* looks up the user by username
+* verifies the submitted password against the stored hash
+* starts a Flask-Login session
+* redirects the user to the originally requested safe URL or the portal landing page
+
+### Logout
+
+Users can explicitly end their session through the logout route.
+
+### Password Changes
+
+Authenticated users can change their password from the account page.
+
+The password-change workflow:
+
+1. Verifies the current password.
+2. Validates the new password and confirmation.
+3. Hashes the new password.
+4. Updates the authenticated user’s record in the authentication database.
+
+
+## Portal Routes
+
+The portal blueprint does not use a `/dashboard` prefix.
+
+| Route                            | Method      | Purpose                                  |
+| -------------------------------- | ----------- | ---------------------------------------- |
+| `/`                              | GET         | Portal landing page                      |
+| `/updates`                       | GET         | Display alumni update submissions        |
+| `/alumni-updates/<edit_id>/edit` | POST        | Save edits to an alumni update           |
+| `/class-notes`                   | GET         | Display class note submissions           |
+| `/class-notes/<edit_id>/edit`    | POST        | Save edits to a class note               |
+| `/memoriam`                      | GET         | Display the memoriam page                |
+| `/accounts`                      | GET, POST   | View account details and change password |
+| `/login`                         | GET, POST   | Authenticate a staff user                |
+| `/logout`                        | GET or POST | End the authenticated session            |
+
+All portal-management pages require authentication.
+
+## Alumni Data Model
+
+The alumni database uses a normalized relational structure.
+
+Core models include:
+
+* `Alumni`
+* `AlumniUpdate`
+* `AlumniAddress`
+* `AlumniFamilyUpdate`
+* `AlumniChild`
+* `AlumniEmploymentUpdate`
+* `AlumniEducationUpdate`
+* `AlumniClassNote`
+
+### Alumni Updates
+
+The alumni update workflow can load and edit related data such as:
+
+* alumnus identity and contact information
+* address information
+* family updates
+* children
+* employment updates
+* additional education
+* general life updates
+* volunteer interests
+
+The update list uses SQLAlchemy relationship loading to retrieve related records efficiently.
+
+### Class Notes
+
+Class notes are associated with alumni updates and can include:
+
+* first name
+* last name
+* graduation year
+* degree type
+* class note text
+* image information
+* optional display or nameplate information
+
+Edits are applied through model helper methods before the SQLAlchemy session is committed.
+
+## Forms and Validation
+
+Forms use Flask-WTF and WTForms.
+
+The project includes separate forms for:
+
+* login
+* password changes
+* alumni update editing
+* class note editing
+
+CSRF protection is initialized globally through `CSRFProtect`.
+
+Templates should include:
+
+```jinja2
+{{ form.hidden_tag() }}
+```
+
+inside each POST form.
+
+## Running Tests
+
+The repository contains tests for model mapping and staff authentication behavior.
+
+Install `pytest` if it is not already available:
+
+```powershell
+pip install pytest
+```
+
+Run the test suite from the project root:
+
+```powershell
+pytest
+```
+
+For more detailed output:
+
+```powershell
+pytest -v
+```
+
+Current test files include:
+
+```text
+tests/test_model_mapping.py
+tests/test_staff_user_model.py
+```
+
+## Azure Deployment
+
+The repository includes a GitHub Actions workflow for deploying the application to Azure App Service.
+
+The workflow:
+
+1. Runs when code is pushed to the `main` branch.
+2. Can also be started manually with `workflow_dispatch`.
+3. Checks out the repository.
+4. Configures Python.
+5. Creates a virtual environment.
+6. Installs dependencies.
+7. Packages the application.
+8. Deploys the package to the Azure Web App.
+
+The workflow currently targets:
+
+```text
+Geneva-App-Portal
+```
+
+### Azure Application Settings
+
+Configure the following settings in the Azure App Service environment:
+
+```text
+SECRET_KEY
+DB_HOST
+DB_USER
+DB_PASSWORD
+ALUMNI_DB_NAME
+AUTH_DB_NAME
+```
+
+These values should be configured under:
+
+```text
+Azure App Service
+→ Settings
+→ Environment variables
+```
+
+Do not place production credentials in the repository or GitHub Actions workflow file.
+
+## Database Schema Changes
+
+The current application initializes Flask-SQLAlchemy but does not currently initialize Flask-Migrate in `app/extensions.py` or `create_app()`.
+
+Therefore, commands such as the following are not available unless Flask-Migrate is added and configured:
+
+```text
+flask db migrate
+flask db upgrade
+```
+
+Until migration support is implemented, database schema changes must be coordinated separately.
+
+To add Flask-Migrate in the future:
+
+1. Add `Flask-Migrate` to `requirements.txt`.
+2. Create a `Migrate()` extension.
+3. Initialize it with `migrate.init_app(app, db)`.
+4. Create or restore the Alembic migration directory.
+5. Confirm that migrations work correctly with both SQLAlchemy binds.
+
+## Development Workflow
+
+A typical development workflow is:
+
+```powershell
+git checkout -b feature/description
+```
+
+Make and test the changes:
+
+```powershell
+pytest
+python run.py
+```
+
+Commit the work:
+
+```powershell
+git add .
+git commit -m "Describe the change"
+git push origin feature/description
+```
+
+Then open a pull request into `main`.
+
+Because pushes to `main` trigger the Azure deployment workflow, changes should be reviewed and tested before merging.
